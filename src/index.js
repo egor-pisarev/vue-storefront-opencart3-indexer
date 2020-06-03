@@ -14,8 +14,8 @@ const shell = require('shelljs')
 const fs = require('fs')
 const jsonFile = require('jsonfile')
 
-const putMappings = require('./meta/elastic').putMappings
 
+const putMappings = require('./meta/elastic').putMappings
 
 let INDEX_VERSION = 1
 let INDEX_META_DATA
@@ -64,19 +64,21 @@ function showWelcomeMsg() {
 }
 
 function authUser(callback) {
-    return api.post(config.vsbridge['auth_endpoint']).type('json').send({
-        username: config.vsbridge.auth.username,
-        password: config.vsbridge.auth.password,
-    }).end((resp) => {
-        if(resp.body && resp.body.code == 200)
-        {
-            console.log('Got auth token ', resp.body.result)
 
+    return api.auth(config.vsbridge['auth_endpoint'], config.vsbridge.auth.username, config.vsbridge.auth.password).then((resp) => {
+
+        if(resp.body.error){
+            console.error(resp.body.error);
+        }
+
+        if(resp.body && resp.body.api_token)
+        {
             if (callback) {
-                callback(resp.body);
+                callback(resp.body.api_token);
             }
 
-        } else {
+        } 
+        else {
             console.error(resp.body.result);
         }
     });
@@ -134,7 +136,6 @@ function publishTempIndex() {
         })
     }
 
-
     return client.indices.deleteAlias({
         index: `${config.elasticsearch.indexName}_${INDEX_VERSION-1}`,
         name: config.elasticsearch.indexName
@@ -149,6 +150,9 @@ function publishTempIndex() {
 
 function storeResults(singleResults, entityType) {
     singleResults.map((ent) => {
+        if(entityType === 'product' && ent.sku.length === 0) {
+            ent.sku = ent.model
+        }
         client.index({
             index: `${config.elasticsearch.indexName}_${INDEX_VERSION}`,
             type: entityType,
@@ -188,8 +192,12 @@ function importListOf(entityType, importer, config, api, page = 0, pageSize = 10
         api.authWith(AUTH_TOKEN);
         api.get(config.vsbridge[entityType + '_endpoint']).type('json').query(query).end((resp) => {
 
+            if(resp.body.error){
+                console.error(resp.body.error);
+            }
+
             if (resp.body && resp.body.code !== 200) { // unauthroized request
-                console.log(resp.body.result);
+                console.log(resp);
                 process.exit(-1);
             }
 
@@ -224,6 +232,15 @@ function importListOf(entityType, importer, config, api, page = 0, pageSize = 10
         })
     })
 }
+
+cli.command('test',  () => {
+
+    console.log('123')
+    // api.get(config.vsbridge['product_endpoint']).type('json').then((response) => {
+    //     console.log(response.body)
+    // })
+})
+ 
 
 cli.command('products',  () => { // TODO: add parallel processing
    showWelcomeMsg()
@@ -265,7 +282,6 @@ cli.command('categories',  () => {
 });
 
 
-
 cli.command('new',  () => {
     showWelcomeMsg()
     recreateTempIndex()
@@ -297,9 +313,11 @@ process.on('uncaughtException', function (exception) {
 
 INDEX_META_DATA = readIndexMeta()
 INDEX_VERSION = INDEX_META_DATA.version
-authUser((authResp) => {
+authUser((token) => {
+    
   // RUN
-  AUTH_TOKEN = authResp.result
+  AUTH_TOKEN = token
+  console.log(`Token ${token}`)
   cli.parse(process.argv);
 })
 
