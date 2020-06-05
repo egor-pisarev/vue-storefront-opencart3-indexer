@@ -21,7 +21,7 @@ class VsBridgeApiClient {
         return unirest.headers({'Accept': 'application/json', 'Content-Type': 'application/json'})
     }
     _setupUrl(endpointUrl) {
-        const url = endpointUrl + '?token=' + encodeURIComponent(this.token)
+        const url = endpointUrl + '?apikey=' + encodeURIComponent(this.token)
         console.log('Fetching data from', url);
         return url
     }

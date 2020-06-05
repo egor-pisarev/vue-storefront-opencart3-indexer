@@ -197,7 +197,7 @@ function importListOf(entityType, importer, config, api, page = 0, pageSize = 10
             }
 
             if (resp.body && resp.body.code !== 200) { // unauthroized request
-                console.log(resp);
+                console.log('Error resp.body.code !== 200');
                 process.exit(-1);
             }
 
