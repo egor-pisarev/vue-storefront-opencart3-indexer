@@ -22,7 +22,7 @@ let INDEX_META_DATA
 let AUTH_TOKEN = ''
 const INDEX_META_PATH = path.join(__dirname, '../var/indexMetadata.json')
 
-const { spawn } = require('child_process');
+const {spawn} = require('child_process');
 
 const es = require('elasticsearch')
 let client = new es.Client({ // as we're runing tax calculation and other data, we need a ES indexer
@@ -35,27 +35,31 @@ let client = new es.Client({ // as we're runing tax calculation and other data, 
 const CommandRouter = require('command-router')
 const cli = CommandRouter()
 
-cli.option({ name: 'page'
-, alias: 'p'
-, default: 0
-, type: Number
+cli.option({
+    name: 'page'
+    , alias: 'p'
+    , default: 0
+    , type: Number
 })
-cli.option({ name: 'pageSize'
-, alias: 'l'
-, default: 25
-, type: Number
-})
-
-cli.option({ name: 'partitions'
-, alias: 't'
-, default: 20
-, type: Number
+cli.option({
+    name: 'pageSize'
+    , alias: 'l'
+    , default: 25
+    , type: Number
 })
 
-cli.option({ name: 'runSerial'
-, alias: 's'
-, default: false
-, type: Boolean
+cli.option({
+    name: 'partitions'
+    , alias: 't'
+    , default: 20
+    , type: Number
+})
+
+cli.option({
+    name: 'runSerial'
+    , alias: 's'
+    , default: false
+    , type: Boolean
 })
 
 
@@ -67,17 +71,16 @@ function authUser(callback) {
 
     return api.auth(config.vsbridge['auth_endpoint'], config.vsbridge.auth.username, config.vsbridge.auth.password).then((resp) => {
 
-        if(resp.body.error){
+        if (resp.body.error) {
             console.error(resp.body.error);
         }
 
-        if(resp.body && resp.body.api_token)
-        {
+        if (resp.body && resp.body.api_token) {
             if (callback) {
                 callback(resp.body.api_token);
             }
 
-        } 
+        }
         else {
             console.error(resp.body.result);
         }
@@ -85,11 +88,11 @@ function authUser(callback) {
 }
 
 function readIndexMeta() {
-    let indexMeta = { version: 0, created: new Date(), updated: new Date() }
+    let indexMeta = {version: 0, created: new Date(), updated: new Date()}
 
     try {
         indexMeta = jsonFile.readFileSync(INDEX_META_PATH)
-    } catch (err){
+    } catch (err) {
         console.log('Seems like first time run!', err.message)
     }
     return indexMeta
@@ -100,7 +103,7 @@ function recreateTempIndex() {
     let indexMeta = readIndexMeta()
 
     try {
-        indexMeta.version ++
+        indexMeta.version++
         INDEX_VERSION = indexMeta.version
         indexMeta.updated = new Date()
         jsonFile.writeFileSync(INDEX_META_PATH, indexMeta)
@@ -108,36 +111,38 @@ function recreateTempIndex() {
         console.error(err)
     }
 
-    let step2 = () => {
-        client.indices.create({ index: `${config.elasticsearch.indexName}_${INDEX_VERSION}` }).then(result=>{
-            console.log('Index Created', result)
-            console.log('** NEW INDEX VERSION', INDEX_VERSION, INDEX_META_DATA.created)
-        }).then((result) => {
-            putMappings(client, `${config.elasticsearch.indexName}_${INDEX_VERSION}`, ()  => {})
-        })
-    }
+    client.indices.create({index: `${config.elasticsearch.indexName}_${INDEX_VERSION}`}).then(result => {
+        console.log('Index Created', result)
+        console.log('** NEW INDEX VERSION', INDEX_VERSION, INDEX_META_DATA.created)
+    }).then((result) => {
+        putMappings(client, `${config.elasticsearch.indexName}_${INDEX_VERSION}`, () => {})
+    })
 
+}
 
+function deleteOldIndex(version) {
     return client.indices.delete({
-        index: `${config.elasticsearch.indexName}_${INDEX_VERSION}`
+        index: `${config.elasticsearch.indexName}_${version}`
     }).then((result) => {
         console.log('Index deleted', result)
-        return step2()
     }).catch((err) => {
+        console.log(err)
         console.log('Index does not exst')
-        return step2()
     })
 }
 
 function publishTempIndex() {
     let step2 = () => {
-        client.indices.putAlias({ index: `${config.elasticsearch.indexName}_${INDEX_VERSION}`, name: config.elasticsearch.indexName }).then(result=>{
+        client.indices.putAlias({index: `${config.elasticsearch.indexName}_${INDEX_VERSION}`, name: config.elasticsearch.indexName}).then(result => {
             console.log('Index alias created', result)
         })
+        if (INDEX_VERSION > 1) {
+            deleteOldIndex(INDEX_VERSION - 1)
+        }
     }
 
     return client.indices.deleteAlias({
-        index: `${config.elasticsearch.indexName}_${INDEX_VERSION-1}`,
+        index: `${config.elasticsearch.indexName}_${INDEX_VERSION - 1}`,
         name: config.elasticsearch.indexName
     }).then((result) => {
         console.log('Public index alias deleted', result)
@@ -150,7 +155,7 @@ function publishTempIndex() {
 
 function storeResults(singleResults, entityType) {
     singleResults.map((ent) => {
-        if(entityType === 'product' && ent.sku.length === 0) {
+        if (entityType === 'product' && ent.sku.length === 0) {
             ent.sku = ent.model
         }
         client.index({
@@ -170,8 +175,7 @@ function storeResults(singleResults, entityType) {
  */
 function importListOf(entityType, importer, config, api, page = 0, pageSize = 100, recursive = true) {
 
-    if (!config.vsbridge[entityType + '_endpoint'])
-    {
+    if (!config.vsbridge[entityType + '_endpoint']) {
         console.error('No endpoint defined for ' + entityType)
         return
     }
@@ -192,7 +196,7 @@ function importListOf(entityType, importer, config, api, page = 0, pageSize = 10
         api.authWith(AUTH_TOKEN);
         api.get(config.vsbridge[entityType + '_endpoint']).type('json').query(query).end((resp) => {
 
-            if(resp.body.error){
+            if (resp.body.error) {
                 console.error(resp.body.error);
             }
 
@@ -203,13 +207,13 @@ function importListOf(entityType, importer, config, api, page = 0, pageSize = 10
 
             let queue = []
             let index = 0
-            for(let obj of resp.body.result) { // process single record
+            for (let obj of resp.body.result) { // process single record
                 let promise = importer.single(obj).then((singleResults) => {
                     storeResults(singleResults, entityType)
                     console.log('* Record done for ', obj.id, index, pageSize)
                     index++
                 })
-                if(cli.options.runSerial)
+                if (cli.options.runSerial)
                     queue.push(() => promise)
                 else
                     queue.push(promise)
@@ -217,91 +221,94 @@ function importListOf(entityType, importer, config, api, page = 0, pageSize = 10
             let resultParser = (results) => {
                 console.log('** Page done ', page, resp.body.result.length)
 
-                if(resp.body.result.length === pageSize)
-                {
-                    if(recursive) {
+                if (resp.body.result.length === pageSize) {
+                    if (recursive) {
                         console.log('*** Switching page!')
                         return importListOf(entityType, importer, config, api, page + 1, pageSize)
                     }
                 }
             }
-            if(cli.options.runSerial)
-                promise.serial(queue).then(resultParser).then((res) => resolve(res)).catch((reason) => { console.error(reason); reject() })
+            if (cli.options.runSerial)
+                promise.serial(queue).then(resultParser).then((res) => resolve(res)).catch((reason) => {console.error(reason); reject()})
             else
-                Promise.all(queue).then(resultParser).then((res) => resolve(res)).catch((reason) => { console.error(reason); reject() })
+                Promise.all(queue).then(resultParser).then((res) => resolve(res)).catch((reason) => {console.error(reason); reject()})
         })
     })
 }
 
-cli.command('test',  () => {
-
-    console.log('123')
-    // api.get(config.vsbridge['product_endpoint']).type('json').then((response) => {
-    //     console.log(response.body)
-    // })
-})
- 
-
-cli.command('products',  () => { // TODO: add parallel processing
-   showWelcomeMsg()
-
-   importListOf('product', new BasicImporter('product', config, api, page = cli.options.page, pageSize = cli.options.pageSize), config, api, page = cli.options.page, pageSize = cli.options.pageSize).then((result) => {
-
-   }).catch(err => {
-      console.error(err)
-   })
+cli.command('purge', () => {
+    client.indices.delete({index: '*'})
+    fs.unlink(INDEX_META_PATH, () => {
+        console.log('Meta file removed')
+    })
 })
 
-cli.command('taxrules',  () => {
+cli.command('products', () => { // TODO: add parallel processing
+    showWelcomeMsg()
+
+    importListOf('product', new BasicImporter('product', config, api, page = cli.options.page, pageSize = cli.options.pageSize), config, api, page = cli.options.page, pageSize = cli.options.pageSize).then((result) => {
+
+    }).catch(err => {
+        console.error(err)
+    })
+})
+
+cli.command('taxrules', () => {
     importListOf('taxrule', new BasicImporter('taxrule', config, api, page = cli.options.page, pageSize = cli.options.pageSize), config, api, page = cli.options.page, pageSize = cli.options.pageSize).then((result) => {
 
     }).catch(err => {
-       console.error(err)
+        console.error(err)
     })
 
 });
 
-cli.command('attributes',  () => {
+cli.command('attributes', () => {
     showWelcomeMsg()
 
     importListOf('attribute', new BasicImporter('attribute', config, api, page = cli.options.page, pageSize = cli.options.pageSize), config, api, page = cli.options.page, pageSize = cli.options.pageSize).then((result) => {
 
     }).catch(err => {
-       console.error(err)
+        console.error(err)
     })
 });
 
-cli.command('categories',  () => {
+cli.command('categories', () => {
     showWelcomeMsg()
 
     importListOf('category', new BasicImporter('category', config, api, page = cli.options.page, pageSize = cli.options.pageSize), config, api, page = cli.options.page, pageSize = cli.options.pageSize).then((result) => {
 
     }).catch(err => {
-       console.error(err)
+        console.error(err)
     })
 });
 
 
-cli.command('new',  () => {
+cli.command('new', () => {
     showWelcomeMsg()
     recreateTempIndex()
 });
 
 
-cli.command('publish',  () => {
+cli.command('publish', () => {
     showWelcomeMsg()
     publishTempIndex()
 });
 
+
+cli.command('clear', () => {
+    showWelcomeMsg()
+    deleteOldIndex()
+})
+
 cli.on('notfound', (action) => {
-  console.error('I don\'t know how to: ' + action)
-  process.exit(1)
+    console.error('I don\'t know how to: ' + action)
+    process.exit(1)
 })
 
 
 process.on('unhandledRejection', (reason, p) => {
-  console.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
-   // application specific logging, throwing an error, or other logic here
+    console.error('Unhandled Rejection at: Promise', p, 'reason:', reason);
+    // application specific logging, throwing an error, or other logic here
 });
 
 process.on('uncaughtException', function (exception) {
@@ -314,11 +321,11 @@ process.on('uncaughtException', function (exception) {
 INDEX_META_DATA = readIndexMeta()
 INDEX_VERSION = INDEX_META_DATA.version
 authUser((token) => {
-    
-  // RUN
-  AUTH_TOKEN = token
-  console.log(`Token ${token}`)
-  cli.parse(process.argv);
+
+    // RUN
+    AUTH_TOKEN = token
+    console.log(`Token ${token}`)
+    cli.parse(process.argv);
 })
 
 
@@ -327,6 +334,6 @@ authUser((token) => {
 function handle(signal) {
     console.log('Received  exit signal. Bye!');
     process.exit(-1)
-  }
+}
 process.on('SIGINT', handle);
 process.on('SIGTERM', handle);

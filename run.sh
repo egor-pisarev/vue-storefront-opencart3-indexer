@@ -11,4 +11,3 @@ node index.js categories
 node index.js products
 node index.js publish
 
-
