@@ -9,5 +9,6 @@ node index.js attributes
 node index.js taxrules
 node index.js categories
 node index.js products
+node index.js cmspages
 node index.js publish
 

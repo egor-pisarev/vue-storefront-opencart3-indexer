@@ -283,6 +283,17 @@ cli.command('categories', () => {
 });
 
 
+cli.command('cmspages', () => {
+    showWelcomeMsg()
+
+    importListOf('cms_page', new BasicImporter('cms_page', config, api, page = cli.options.page, pageSize = cli.options.pageSize), config, api, page = cli.options.page, pageSize = cli.options.pageSize).then((result) => {
+
+    }).catch(err => {
+        console.error(err)
+    })
+});
+
+
 cli.command('new', () => {
     showWelcomeMsg()
     recreateTempIndex()
