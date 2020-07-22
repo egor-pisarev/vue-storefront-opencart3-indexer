@@ -1,0 +1,22 @@
+{
+    "elasticsearch": {
+        "host": "localhost:9200",
+        "indexName": "vue_storefront_catalog"
+    },
+    "vsbridge": {
+        "url": "http://admin.ivago.marketrocket.ru/vsbridge/",
+        "auth": {
+            "username": "Default",
+            "password": "4ZHnFCOosOohFuQMi2tiINF87fynbxGIM8EET1ddLXJmNz6AFbeEvtR53KdJVHAgtuj3b4PWWVjF9lAKBFcIcqsoc5X8go1dQxtdZT9TFNThBSUWnQQ3EPTmzde6LQbpP062oG4uPOc3J2TjAlKxCdIKg5uXTRjoJfEL61RRI3vHEheMOMQwAtGOJQfyTGyHYZPHo0GUP1IUpSS1HVa6ZejcUIbqsXU7GQ2L9tqPZUXNYQ0bj07mbsdkhnA2bbYS",
+            "secret": "!pLaJ#@zT2z4Jm@j!cub1OXfbkiWBS"
+        },
+        "store_id": 0,
+        "language_id": 1,
+        "auth_endpoint": "http://admin.ivago.marketrocket.ru/api/login",
+        "product_endpoint": "http://admin.ivago.marketrocket.ru/api/vsbridge/products",
+        "category_endpoint": "http://admin.ivago.marketrocket.ru/api/vsbridge/categories",
+        "taxrule_endpoint": "http://admin.ivago.marketrocket.ru/api/vsbridge/taxrules",
+        "attribute_endpoint": "http://admin.ivago.marketrocket.ru/api/vsbridge/attributes",
+        "cms_page_endpoint": "http://admin.ivago.marketrocket.ru/api/vsbridge/cmspages"
+    }
+}

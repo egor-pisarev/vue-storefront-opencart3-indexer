@@ -22,44 +22,45 @@ let INDEX_META_DATA
 let AUTH_TOKEN = ''
 const INDEX_META_PATH = path.join(__dirname, '../var/indexMetadata.json')
 
-const {spawn} = require('child_process');
+const { spawn } = require('child_process');
 
 const es = require('elasticsearch')
 let client = new es.Client({ // as we're runing tax calculation and other data, we need a ES indexer
     host: config.elasticsearch.host,
     log: 'error',
     apiVersion: '5.5',
-    requestTimeout: 10000
+    requestTimeout: 10000,
+    auth: { username: config.elasticsearch.username, password: config.elasticsearch.password }
 })
 
 const CommandRouter = require('command-router')
 const cli = CommandRouter()
 
 cli.option({
-    name: 'page'
-    , alias: 'p'
-    , default: 0
-    , type: Number
+    name: 'page',
+    alias: 'p',
+    default: 0,
+    type: Number
 })
 cli.option({
-    name: 'pageSize'
-    , alias: 'l'
-    , default: 25
-    , type: Number
-})
-
-cli.option({
-    name: 'partitions'
-    , alias: 't'
-    , default: 20
-    , type: Number
+    name: 'pageSize',
+    alias: 'l',
+    default: 25,
+    type: Number
 })
 
 cli.option({
-    name: 'runSerial'
-    , alias: 's'
-    , default: false
-    , type: Boolean
+    name: 'partitions',
+    alias: 't',
+    default: 20,
+    type: Number
+})
+
+cli.option({
+    name: 'runSerial',
+    alias: 's',
+    default: false,
+    type: Boolean
 })
 
 
@@ -80,15 +81,14 @@ function authUser(callback) {
                 callback(resp.body.api_token);
             }
 
-        }
-        else {
+        } else {
             console.error(resp.body.result);
         }
     });
 }
 
 function readIndexMeta() {
-    let indexMeta = {version: 0, created: new Date(), updated: new Date()}
+    let indexMeta = { version: 0, created: new Date(), updated: new Date() }
 
     try {
         indexMeta = jsonFile.readFileSync(INDEX_META_PATH)
@@ -104,14 +104,14 @@ function recreateTempIndex() {
 
     try {
         indexMeta.version++
-        INDEX_VERSION = indexMeta.version
+            INDEX_VERSION = indexMeta.version
         indexMeta.updated = new Date()
         jsonFile.writeFileSync(INDEX_META_PATH, indexMeta)
     } catch (err) {
         console.error(err)
     }
 
-    client.indices.create({index: `${config.elasticsearch.indexName}_${INDEX_VERSION}`}).then(result => {
+    client.indices.create({ index: `${config.elasticsearch.indexName}_${INDEX_VERSION}` }).then(result => {
         console.log('Index Created', result)
         console.log('** NEW INDEX VERSION', INDEX_VERSION, INDEX_META_DATA.created)
     }).then((result) => {
@@ -133,7 +133,7 @@ function deleteOldIndex(version) {
 
 function publishTempIndex() {
     let step2 = () => {
-        client.indices.putAlias({index: `${config.elasticsearch.indexName}_${INDEX_VERSION}`, name: config.elasticsearch.indexName}).then(result => {
+        client.indices.putAlias({ index: `${config.elasticsearch.indexName}_${INDEX_VERSION}`, name: config.elasticsearch.indexName }).then(result => {
             console.log('Index alias created', result)
         })
         if (INDEX_VERSION > 1) {
@@ -229,15 +229,21 @@ function importListOf(entityType, importer, config, api, page = 0, pageSize = 10
                 }
             }
             if (cli.options.runSerial)
-                promise.serial(queue).then(resultParser).then((res) => resolve(res)).catch((reason) => {console.error(reason); reject()})
+                promise.serial(queue).then(resultParser).then((res) => resolve(res)).catch((reason) => {
+                    console.error(reason);
+                    reject()
+                })
             else
-                Promise.all(queue).then(resultParser).then((res) => resolve(res)).catch((reason) => {console.error(reason); reject()})
+                Promise.all(queue).then(resultParser).then((res) => resolve(res)).catch((reason) => {
+                    console.error(reason);
+                    reject()
+                })
         })
     })
 }
 
 cli.command('purge', () => {
-    client.indices.delete({index: '*'})
+    client.indices.delete({ index: '*' })
     fs.unlink(INDEX_META_PATH, () => {
         console.log('Meta file removed')
     })
@@ -322,7 +328,7 @@ process.on('unhandledRejection', (reason, p) => {
     // application specific logging, throwing an error, or other logic here
 });
 
-process.on('uncaughtException', function (exception) {
+process.on('uncaughtException', function(exception) {
     console.error(exception); // to see your exception details in the console
     // if you are on production, maybe you can send the exception details to your
     // email as well ?
