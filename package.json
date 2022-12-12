@@ -9,7 +9,7 @@
         "elasticdump": "^3.3.1",
         "elasticsearch": "^14.0.0",
         "empty-dir": "^0.2.1",
-        "express": "^4.16.2",
+        "express": "^4.17.3",
         "fs-exists-sync": "^0.1.0",
         "inquirer": "^4.0.1",
         "is-windows": "^1.0.1",
